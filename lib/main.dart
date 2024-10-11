@@ -125,25 +125,37 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: trackingEnabled
-          ? FloatingActionButton(
-              backgroundColor: const Color.fromRGBO(82, 170, 94, 1.0),
-              tooltip: 'Stop Tracking',
-              onPressed: () {
-                stopTracking();
-              },
-              child: const Icon(Icons.navigation_outlined,
-                  color: Colors.white, size: 28),
-            )
-          : FloatingActionButton(
-              backgroundColor: const Color.fromRGBO(82, 170, 94, 1.0),
-              tooltip: 'Start Tracking',
-              onPressed: () {
-                startTracking();
-              },
-              child:
-                  const Icon(Icons.navigation, color: Colors.white, size: 28),
-            ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            backgroundColor: const Color.fromRGBO(82, 170, 94, 1.0),
+            tooltip: 'Pointed',
+            onPressed: _zoomMap,
+            child: const Icon(Icons.my_location, color: Colors.white, size: 28),
+          ),
+          SizedBox(height: 10),
+          trackingEnabled
+              ? FloatingActionButton(
+                  backgroundColor: const Color.fromRGBO(82, 170, 94, 1.0),
+                  tooltip: 'Stop Tracking',
+                  onPressed: () {
+                    stopTracking();
+                  },
+                  child: const Icon(Icons.navigation_outlined,
+                      color: Colors.white, size: 28),
+                )
+              : FloatingActionButton(
+                  backgroundColor: const Color.fromRGBO(82, 170, 94, 1.0),
+                  tooltip: 'Start Tracking',
+                  onPressed: () {
+                    startTracking();
+                  },
+                  child: const Icon(Icons.navigation,
+                      color: Colors.white, size: 28),
+                ),
+        ],
+      ),
     );
   }
 
