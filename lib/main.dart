@@ -7,10 +7,13 @@ import 'package:get/get_navigation/get_navigation.dart';
 import 'package:location/location.dart' as l;
 import 'package:permission_handler/permission_handler.dart';
 
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +26,7 @@ class MyApp extends StatelessWidget {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -37,6 +40,11 @@ class _HomeScreenState extends State<HomeScreen> {
   bool trackingEnabled = false;
 
   List<l.LocationData> locations = [];
+  List<Marker> allMarkers = [];
+  int numOfMarkers = 0;
+  LatLng mapCenter = const LatLng(50.45466, 30.5238); // Kyiv center
+  double mapZoom = 9.5;
+  MapController map = MapController();
 
   @override
   void initState() {
@@ -79,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ), //IconButton
         ], //<Widget>[]
         leading: IconButton(
-          icon: Icon(Icons.menu, color: Colors.white, size: 28),
+          icon: const Icon(Icons.menu, color: Colors.white, size: 28),
           tooltip: 'Menu Icon',
           onPressed: () => showDialog<String>(
             context: context,
@@ -97,24 +105,24 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         elevation: 50.0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Expanded(
-                child: ListView.builder(
-              itemCount: locations.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(
-                      "${locations[index].latitude} ${locations[index].longitude}"),
-                );
-              },
-            ))
-          ],
-        ),
+      body: Stack(
+        children: [
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: mapCenter,
+              initialZoom: mapZoom,
+            ),
+            children: [
+              TileLayer(
+                // Display map tiles from any source
+                urlTemplate:
+                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png', // OSMF's Tile Server
+                userAgentPackageName: 'com.petrenkodesign',
+              ),
+              MarkerLayer(markers: allMarkers.take(numOfMarkers).toList()),
+            ],
+          ),
+        ],
       ),
       floatingActionButton: trackingEnabled
           ? FloatingActionButton(
@@ -204,12 +212,24 @@ class _HomeScreenState extends State<HomeScreen> {
   addLocation(l.LocationData data) {
     setState(() {
       locations.insert(0, data);
+      mapCenter = LatLng(data.latitude!, data.longitude!);
+      allMarkers.add(
+        Marker(
+          point: mapCenter,
+          height: 12,
+          width: 12,
+          child: const Icon(Icons.hiking,
+              color: Color.fromARGB(255, 240, 101, 8), size: 12),
+        ),
+      );
+      numOfMarkers++;
     });
   }
 
   clearLocation() {
     setState(() {
       locations.clear();
+      allMarkers.clear();
     });
   }
 
@@ -236,5 +256,10 @@ class _HomeScreenState extends State<HomeScreen> {
       trackingEnabled = false;
     });
     clearLocation();
+  }
+
+  void _zoomMap() {
+    mapZoom = 5.0;
+    map.move(mapCenter, mapZoom);
   }
 }
