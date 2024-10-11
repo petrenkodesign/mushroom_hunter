@@ -108,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Stack(
         children: [
           FlutterMap(
+            mapController: map,
             options: MapOptions(
               initialCenter: mapCenter,
               initialZoom: mapZoom,
@@ -259,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _zoomMap() {
-    mapZoom = 5.0;
+    mapZoom = 18.0;
     map.move(mapCenter, mapZoom);
   }
 }
