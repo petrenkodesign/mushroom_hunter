@@ -12,7 +12,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 
-import 'package:path_provider/path_provider.dart';
+// import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(const MyApp());
 
@@ -139,14 +139,14 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {},
             child: const Icon(Icons.layers, color: Colors.white, size: 28),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           FloatingActionButton(
             backgroundColor: const Color.fromRGBO(82, 170, 94, 1.0),
             tooltip: 'Pointed',
             onPressed: _zoomMap,
             child: const Icon(Icons.my_location, color: Colors.white, size: 28),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           trackingEnabled
               ? FloatingActionButton(
                   backgroundColor: const Color.fromRGBO(82, 170, 94, 1.0),
@@ -184,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void requestEnableGps() async {
     if (gpsEnabled) {
-      log("Already open");
+      log("GPS is enabled");
     } else {
       bool isGpsActive = await location.requestService();
       if (!isGpsActive) {
@@ -193,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
         log("User did not turn on GPS");
       } else {
-        log("gave permission to the user and opened it");
+        log("Gave GPS permission to the user and opened it");
         setState(() {
           gpsEnabled = true;
           if (trackingEnabled) startTracking();
@@ -225,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return await Permission.location.serviceStatus.isEnabled;
   }
 
-  checkStatus() async {
+  void checkStatus() async {
     bool permissionGranted = await isPermissionGranted();
     bool gpsEnabled = await isGpsEnabled();
     setState(() {
@@ -234,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  addLocation(l.LocationData data) {
+  void addLocation(l.LocationData data) async {
     setState(() {
       locations.insert(0, data);
       mapCenter = LatLng(data.latitude!, data.longitude!);
@@ -249,15 +249,15 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       numOfMarkers++;
     });
+    // save location in file
+    final storagePermissions = await requestStoragePermissions();
+    if (!storagePermissions) return;
     final t = DateTime.now().toUtc().millisecondsSinceEpoch;
-    writeGPX('<p t="$t" a="' +
-        data.latitude.toString() +
-        '" b="' +
-        data.latitude.toString() +
-        '"/>');
+    writeGPX(
+        '<p t="$t" a="${data.latitude.toString()}" b="${data.latitude.toString()}"/>');
   }
 
-  clearLocation() {
+  void clearLocation() {
     setState(() {
       locations.clear();
       allMarkers.clear();
@@ -298,23 +298,44 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String getFileName() {
     final now = DateTime.now();
-    return 'track_' + DateFormat("y-mm-dd-hh-mm").format(now) + '.gpx';
+    return 'track_${DateFormat("y-mm-dd-hh-mm").format(now)}.gpx';
   }
 
   Future<String> get _localPath async {
-    final directory = await getApplicationDocumentsDirectory();
+    // final directory = await getApplicationDocumentsDirectory(); // for IOS
+    final directory = Directory("/storage/emulated/0/Download/Tracks");
+    if (!directory.existsSync()) {
+      await directory.create();
+    }
     return directory.path;
   }
 
   Future<File> get _localFile async {
     final path = await _localPath;
-    print('$path/$trackFile');
     return File('$path/$trackFile');
   }
 
-  Future<File> writeGPX(String rec) async {
-    final file = await _localFile;
-    print(rec);
-    return file.writeAsString('$rec');
+  Future<void> writeGPX(String rec) async {
+    try {
+      if (Platform.isAndroid) {
+        final file = await _localFile;
+        final res = await file.writeAsString('${rec}\n',
+            mode: FileMode.append, flush: true);
+        log('File saved in: ${res.path}');
+      } else {
+        // IOS
+      }
+    } catch (e) {
+      throw Exception(e);
+    }
+  }
+
+  static Future<bool> requestStoragePermissions() async {
+    var status = await Permission.storage.status;
+    log("Storage permission satus: $status");
+    if (!status.isGranted) {
+      status = await Permission.storage.request();
+    }
+    return status == PermissionStatus.granted;
   }
 }
