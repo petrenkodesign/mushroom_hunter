@@ -65,8 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Mushroom Hunter",
-            style: TextStyle(color: Colors.white)),
+        title:
+            const Text("Шукач Грибів", style: TextStyle(color: Colors.white)),
         centerTitle: true,
         backgroundColor: const Color.fromRGBO(82, 170, 94, 1.0),
         actions: <Widget>[
@@ -305,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String gpxHeader() {
     final localdate = DateTime.now().toUtc().toLocal();
     var res = '<?xml version="1.0" encoding="UTF-8"?> \n';
-    res += '<gpx version="1.1" creator="Mooshroom Hunter"> \n';
+    res += '<gpx version="1.1" creator="Mushroom Hunter"> \n';
     res += '<metadata> \n';
     res += '<name>$trackFile</name> \n';
     res += '<time>$localdate</time> \n';
