@@ -248,9 +248,9 @@ class _HomeScreenState extends State<HomeScreen> {
       numOfMarkers++;
     });
     // save location in file
-    final t = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final utcTime = DateTime.now().toUtc();
     writeGPX(
-        '<p t="$t" a="${data.latitude.toString()}" b="${data.latitude.toString()}"/>');
+        '<wpt lat="${data.latitude.toString()}" lon="${data.longitude.toString()}"><ele>10.0</ele><time>${utcTime.toLocal()}</time><name>${utcTime.toLocal()}.</name><desc>Десь тут гриби</desc></wpt>');
   }
 
   void clearLocation() {
@@ -276,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!(await requestStoragePermissions())) {
       return;
     }
-    writeGPX('<track name="$trackFile">');
+    writeGPX(gpxHeader());
     subscription = location.onLocationChanged.listen((event) {
       addLocation(event);
     });
@@ -288,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
       trackingEnabled = false;
     });
     clearLocation();
-    await writeGPX('</track>');
+    await writeGPX('</gpx>');
     trackFile = '';
   }
 
@@ -302,6 +302,17 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'track_${DateFormat("y-mm-dd-hh-mm-ss").format(now)}';
   }
 
+  String gpxHeader() {
+    final localdate = DateTime.now().toUtc().toLocal();
+    var res = '<?xml version="1.0" encoding="UTF-8"?> \n';
+    res += '<gpx version="1.1" creator="Mooshroom Hunter"> \n';
+    res += '<metadata> \n';
+    res += '<name>$trackFile</name> \n';
+    res += '<time>$localdate</time> \n';
+    res += '</metadata> \n';
+    return res;
+  }
+
   Future<String> get _localPath async {
     // final directory = await getApplicationDocumentsDirectory(); // for IOS
     final directory = Directory("/storage/emulated/0/Download/Tracks");
@@ -313,7 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<File> get _localFile async {
     final path = await _localPath;
-    return File('$path/$trackFile.xml');
+    return File('$path/$trackFile.gpx');
   }
 
   Future<void> writeGPX(String rec) async {
