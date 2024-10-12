@@ -250,8 +250,6 @@ class _HomeScreenState extends State<HomeScreen> {
       numOfMarkers++;
     });
     // save location in file
-    final storagePermissions = await requestStoragePermissions();
-    if (!storagePermissions) return;
     final t = DateTime.now().toUtc().millisecondsSinceEpoch;
     writeGPX(
         '<p t="$t" a="${data.latitude.toString()}" b="${data.latitude.toString()}"/>');
@@ -277,17 +275,22 @@ class _HomeScreenState extends State<HomeScreen> {
       requestEnableGps();
       return;
     }
+    if (!(await requestStoragePermissions())) {
+      return;
+    }
+    writeGPX('<track name="$trackFile">');
     subscription = location.onLocationChanged.listen((event) {
       addLocation(event);
     });
   }
 
-  void stopTracking() {
+  void stopTracking() async {
     subscription.cancel();
     setState(() {
       trackingEnabled = false;
     });
     clearLocation();
+    await writeGPX('</track>');
     trackFile = '';
   }
 
@@ -298,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String getFileName() {
     final now = DateTime.now();
-    return 'track_${DateFormat("y-mm-dd-hh-mm").format(now)}.gpx';
+    return 'track_${DateFormat("y-mm-dd-hh-mm-ss").format(now)}';
   }
 
   Future<String> get _localPath async {
@@ -312,14 +315,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<File> get _localFile async {
     final path = await _localPath;
-    return File('$path/$trackFile');
+    return File('$path/$trackFile.xml');
   }
 
   Future<void> writeGPX(String rec) async {
     try {
       if (Platform.isAndroid) {
         final file = await _localFile;
-        final res = await file.writeAsString('${rec}\n',
+        final res = await file.writeAsString('$rec\n',
             mode: FileMode.append, flush: true);
         log('File saved in: ${res.path}');
       } else {
