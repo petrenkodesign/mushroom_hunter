@@ -12,8 +12,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 
-// import 'package:path_provider/path_provider.dart';
-
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
