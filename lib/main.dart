@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -9,6 +10,9 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:intl/intl.dart';
+
+import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(const MyApp());
 
@@ -45,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   LatLng mapCenter = const LatLng(50.45466, 30.5238); // Kyiv center
   double mapZoom = 9.5;
   MapController map = MapController();
+  String trackFile = '';
 
   @override
   void initState() {
@@ -128,6 +133,13 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          FloatingActionButton(
+            backgroundColor: const Color.fromRGBO(82, 170, 94, 1.0),
+            tooltip: 'Layer change',
+            onPressed: () {},
+            child: const Icon(Icons.layers, color: Colors.white, size: 28),
+          ),
+          SizedBox(height: 10),
           FloatingActionButton(
             backgroundColor: const Color.fromRGBO(82, 170, 94, 1.0),
             tooltip: 'Pointed',
@@ -237,6 +249,12 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       numOfMarkers++;
     });
+    final t = DateTime.now().toUtc().millisecondsSinceEpoch;
+    writeGPX('<p t="$t" a="' +
+        data.latitude.toString() +
+        '" b="' +
+        data.latitude.toString() +
+        '"/>');
   }
 
   clearLocation() {
@@ -250,6 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       trackingEnabled = true;
     });
+    trackFile = getFileName();
     if (!(await isPermissionGranted())) {
       requestLocationPermission();
       return;
@@ -269,10 +288,33 @@ class _HomeScreenState extends State<HomeScreen> {
       trackingEnabled = false;
     });
     clearLocation();
+    trackFile = '';
   }
 
   void _zoomMap() {
     mapZoom = 18.0;
     map.move(mapCenter, mapZoom);
+  }
+
+  String getFileName() {
+    final now = DateTime.now();
+    return 'track_' + DateFormat("y-mm-dd-hh-mm").format(now) + '.gpx';
+  }
+
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    print('$path/$trackFile');
+    return File('$path/$trackFile');
+  }
+
+  Future<File> writeGPX(String rec) async {
+    final file = await _localFile;
+    print(rec);
+    return file.writeAsString('$rec');
   }
 }
