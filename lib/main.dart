@@ -299,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String getFileName() {
     final now = DateTime.now();
-    return 'track_${DateFormat("y-mm-dd-hh-mm-ss").format(now)}';
+    return 'track_${DateFormat("y-mm-dd-HH-mm-ss").format(now)}';
   }
 
   String gpxHeader() {
